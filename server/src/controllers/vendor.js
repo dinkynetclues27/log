@@ -1,19 +1,23 @@
-
 var fs = require("fs");
+const path = require('path');
+   
+const folder = path.join(__dirname,'..','vendors');
+const getvendorlist = (req,res)=>{
+    try{
+        var result = [];
+        const folders = fs.readdirSync(folder);
+        // console.log(folders)
+         folders.forEach(fold=>{
+         result.push(fold);
+            // console.log(result);
+               });
+        res.json(result);
+    }
+    catch{
+            console.log("error")
+    }
 
-const getvendorlist = ()=>{
-    // var dirPath = 'vendors/';
-    // var result = [];
-
-    fs.readdir('vendors/', function(err, files) {
-        if (err)
-            console.log(err);
-        else
-            files.map(function(f) {
-                return 'vendors/'+f;
-            });
-            return files;
-    })
 }
 
 module.exports = getvendorlist;
+
