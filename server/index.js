@@ -6,29 +6,40 @@ const path = require("path")
 const port = process.env.PORT
 const cors = require('cors')
 const bodyParser = require('body-parser');
-const routers = require('./src/routes/route')
+const routers = require('./src/routes/route');
+const { METHODS } = require('http');
+const http = require('http').Server(app);
 
-const http = require('http');
-const server = http.createServer(app);
-const { Server } = require('socket.io');
-const io = new Server(server);
+const io = require('socket.io')(http, {
+  cors: {
+      origin: "http://localhost:3000",
+      methods : ["GET", "POST"],
+      credentials: true
+  }
+});
 
-app.use(cors());
+
+app.use(cors(
+  // origin: "http://localhost:3000",
+  // methods : ["GET", "POST"]
+
+
+));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 app.use(routers);
 
-io.on('connection', (socket) => {
-  console.log('a user connected');
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
-  });
-});
 
 sequelize;
 
-app.listen(port, () => {
+http.listen(port, () => {
     console.log("Server is running on port 4000");
   });
 
-module.exports = io
+module.exports = {io}

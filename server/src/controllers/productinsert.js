@@ -3,7 +3,8 @@ const sequelize = require("../config/database");
 const csv = require("csv-parser");
 const path = require("path")
 const fs = require("fs");
-const io = require("../../index");
+const {io} = require("../../index");
+
 const productinsert = async(req,res)=>{
         const vendor = req.body.vendor;
         if(!vendor){
@@ -15,8 +16,6 @@ const productinsert = async(req,res)=>{
           if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'CSV file not found' });
   }
-
-  const socket = io("http://localhost:4000");
   
     const results = []
     fs.createReadStream(filePath)
@@ -26,18 +25,17 @@ const productinsert = async(req,res)=>{
         try{
             for (const row of results) {
             
-                console.log(row.product_id)
-                console.log(row.product_name)
+                // console.log(row.product_id)
+                // console.log(row.product_name)
 
-                console.log(row.price)
+                // console.log(row.price)
 
-                console.log(row.quantity)
+                // console.log(row.quantity)
 
            await sequelize.query( 'INSERT INTO product (product_id,product_name,quantity,price) VALUES (?,?, ?, ?)',
              {replacements:[row.product_id,row.product_name,row.quantity,row.price], type: QueryTypes.INSERT } );
                 
-             io.emit('productinserted', row); 
-         
+             req.io.emit('productInserted', { status: 'success', product: row });
          }
          res.status(200).json({message:"Product added successfully"});
         }
