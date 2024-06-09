@@ -3,10 +3,11 @@ const sequelize = require("../config/database");
 const csv = require("csv-parser");
 const path = require("path")
 const fs = require("fs");
-const {io} = require("../../index");
+
 
 const productinsert = async(req,res)=>{
         const vendor = req.body.vendor;
+        console.log(vendor);
         if(!vendor){
             return res.status(400).json({ error: 'Vendor not found' });
         }
@@ -32,10 +33,15 @@ const productinsert = async(req,res)=>{
 
                 // console.log(row.quantity)
 
+                const existingProduct = await sequelize.query(
+                    'SELECT * FROM product WHERE product_id = ?',
+                    { replacements: [row.product_id], type: QueryTypes.SELECT }
+                  );
+                  
            await sequelize.query( 'INSERT INTO product (product_id,product_name,quantity,price) VALUES (?,?, ?, ?)',
              {replacements:[row.product_id,row.product_name,row.quantity,row.price], type: QueryTypes.INSERT } );
                 
-             req.io.emit('productInserted', { status: 'success', product: row });
+
          }
          res.status(200).json({message:"Product added successfully"});
         }

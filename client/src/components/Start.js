@@ -1,72 +1,73 @@
 import React,{useState,useEffect} from 'react'
 import axios from 'axios'
-import socketIO from 'socket.io-client';
+
 
 const Start = () => {
 const [vendors,setvendor] = useState([]);
 const [selectedVendor, setSelectedVendor] = useState('');
-const [log, setLog] = useState([]);
+const [logs, setLogs] = useState([]);
+const [showLogs, setShowLogs] = useState(false);
 
 
-useEffect(() => {
-  const socket = socketIO.connect('http://localhost:4000');
-
-  socket.on('connect', () => {
-    console.log('Socket connected successfully');
-  });
-
-  socket.on('error', (error) => {
-    console.error('Socket error:', error);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Socket disconnected');
-  });
-
-  socket.on('insert', (data) => {
-    console.log("Received data from socket:", data); 
-    setLog(prevLog => [...prevLog, data]);
-  });
-  
-  console.log("Socket connecting...");
-
-  return () => {
-    if(socket){
-      socket.disconnect();
-    }
-  };
-}, []);
 
 
     const fetch = async () =>{
       try {
         const response = await axios.get("http://localhost:4000/getvendor");
-        // console.log(response)
+        // console.log(response.data); // Add this line to check the fetched vendors
         setvendor(response.data)
         // console.log(response.data)
       }
       catch (error) {
-        console.log(error);
+        // console.log(error);
       }
     }
-    useEffect (() =>{
-      fetch();
-    },[])
-  
+
+    fetch()
 
 
-    const handlechange = (event) =>{
-      setSelectedVendor(event.target.value)
-    }
+    const handlechange = (event) => {
+      setSelectedVendor(event.target.value);
+    };
+    
 
     const select = async () => {
+      if (!selectedVendor) {
+        console.log("Please select a vendor");
+        return;
+      }
+    
       try {
+        setLogs([]); // Clear previous logs
+        setShowLogs(true); // Show logs section
+  
+        const eventSource = new EventSource('http://localhost:4000/events');
+  
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Received SSE:', data);
+        setLogs(prevLogs => [...prevLogs, data]);
+
+      };
+  
+      eventSource.onerror = (error) => {
+        console.error('SSE error:', error);
+      };
+  
         await axios.post("http://localhost:4000/insertpro", { vendor: selectedVendor });
+        console.log(selectedVendor)
         console.log("Products inserted successfully");
       } catch (error) {
         console.log(error);
       }
     }
+
+    // useEffect(() => {
+      
+    //   return () => {
+    //     eventSource.close();
+    //   };
+    // }, []);
 
   return (
     <div className="container start-container">
@@ -76,7 +77,7 @@ useEffect(() => {
             <div className="form-group">
               <label htmlFor="">Select Vendor:</label>
               <div className="select-wrapper">
-                <select className="form-control" onChange={handlechange}>
+              <select className="form-control" onChange={handlechange}>
 
                   {/* {console.log(vendors)} */}
                 {vendors.map((vendor,index) => (
@@ -93,14 +94,19 @@ useEffect(() => {
             </div>
           
           </div>
-         
+          {showLogs && (
+            <div className="logs">
+              <h3>Product Insertion Logs:</h3>
+              <ul>
+                {logs.map((log, index) => (
+                  <li key={index}>{log.message}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
-      <div>
-  {log.map((logg, index) => (
-    <div key={index}>{logg}</div>
-  ))}
-</div>
+
     </div>
   )
 }
