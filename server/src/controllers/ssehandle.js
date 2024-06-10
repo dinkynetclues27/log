@@ -1,7 +1,13 @@
 const { QueryTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const sendSSE = (res) => {
+let clients = [];
+
+const sendSSE = (data) => {
+  clients.forEach(client => client.res.write(`data: ${JSON.stringify(data)}\n\n`));
+};
+
+const sseHandler = (req, res) => {
   res.set({
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
@@ -10,21 +16,13 @@ const sendSSE = (res) => {
 
   res.write(': ping\n\n');
 
-  const sendEvent = (data) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
+  const clientId = Date.now();
+  const newClient = { id: clientId, res };
+  clients.push(newClient);
 
-  sequelize.query("SELECT * FROM product", { type: QueryTypes.SELECT })
-  .then(products => {
-    products.forEach((product, index) => {
-      setTimeout(() => {
-        sendEvent({ message: `Product ${product.product_id} ${product ? 'successfully inserted' : 'failed to insert'}` });
-      }, index * 1000); 
-    });
-  })
-    .catch(error => {
-      console.error('Error querying products:', error);
-    });
+  req.on('close', () => {
+    clients = clients.filter(client => client.id !== clientId);
+  });
 };
 
-module.exports = { sendSSE };
+module.exports = { sendSSE, sseHandler };
