@@ -166,7 +166,7 @@ const productinsert = async (req, res) => {
                     { replacements: [row.product_name, row.quantity, row.price, row.product_id], type: QueryTypes.UPDATE }
                   );
                   successCount++;
-                  sendSSE({ message: `Product ${row.product_id} updated successfully`, type: 'update' });
+                  sendSSE({ message: `Product ${row.product_id} updated successfully `, type: 'update' });
                 } else {
                   skippedCount++;
                   sendSSE({ message: `Product ${row.product_id} skipped `, type: 'skip' });
