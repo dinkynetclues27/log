@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const LogDisplay = ({ vendor, getColor }) => {
+const LogDisplay = ({ vendor, getColor,startLogging }) => {
   const [logs, setLogs] = useState([]);
 
   useEffect(() => {
+    if (startLogging) { 
     const eventSource = new EventSource(`http://localhost:4000/events?vendor=${vendor}`);
 
     eventSource.onmessage = (event) => {
@@ -19,7 +20,8 @@ const LogDisplay = ({ vendor, getColor }) => {
     return () => {
       eventSource.close();
     };
-  }, [vendor]);
+  }
+  }, [startLogging,vendor]);
 
   return (
     <div className="logs" style={{ backgroundColor: 'black' }}>

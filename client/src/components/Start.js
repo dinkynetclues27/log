@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import axios from 'axios';
 import VendorSelection from './VendorSelection';
@@ -12,6 +11,8 @@ const Start = () => {
   const [showLogs, setShowLogs] = useState(false);
   const [showsuccess, setshowsuccess] = useState(false);
   const [showFail, setShowFail] = useState(false);
+  const [startLogging,setStartLogging] = useState(false)
+  const [currentVendor, setCurrentVendor] = useState(null);
 
   const fetchSuccess = async () => {
     try {
@@ -38,14 +39,15 @@ const Start = () => {
   };
 
   const onCurrentClick = () => {
-    setShowLogs(true);
-    setshowsuccess(false);
-    setShowFail(false);
+    // setCurrentVendor(vendor); 
+  setShowLogs(true);
+  setStartLogging(false);
   };
 
   const handleSelect = (vendor) => {
     if (vendor && !selectedVendors.includes(vendor)) {
       setSelectedVendors([...selectedVendors, vendor]);
+      setStartLogging(false); 
       axios.post("http://localhost:4000/insertpro", { vendor })
         .then(() => {
           console.log(`Products processing started for vendor: ${vendor}`);
@@ -54,6 +56,13 @@ const Start = () => {
           console.error('Error inserting products:', error);
         });
     }
+  };
+
+  const onViewClick = () => {
+    setStartLogging(true);
+    setShowLogs(true);
+    setshowsuccess(false);
+    setShowFail(false);
   };
 
   const getColor = (type) => {
@@ -78,13 +87,19 @@ const Start = () => {
             <div className="text-center">
               <button className="btnn" style={{ border: '1px solid #37f713' }} onClick={fetchSuccess}>Success</button>
               <button className="btnn" style={{ border: '1px solid #37f713' }} onClick={fetchFail}>Fail</button>
-              <button className="btnn" style={{ border: '1px solid #37f713' }} onClick={onCurrentClick} >Current</button>
+              <button className="btnn" style={{ border: '1px solid #37f713' }} onClick={() => onCurrentClick(selectedVendors[selectedVendors.length - 1])}>Current</button>
             </div>
           </div>
           {showsuccess && <SuccessFailDisplay data={success} type="success" />}
           {showFail && <SuccessFailDisplay data={fail} type="fail" />}
-          {showLogs && selectedVendors.map((vendor, index) => (
-            <LogDisplay key={index} vendor={vendor} getColor={getColor} />
+           {selectedVendors.map((vendor, index) => (
+            <div key={index}>
+              <p>Selected Vendor: {vendor}</p>
+              <button onClick={onViewClick}>View</button>
+            </div>
+          ))}
+            {showLogs && selectedVendors.map((vendor, index) => (
+            <LogDisplay key={index} vendor={vendor} getColor={getColor} startLogging={startLogging}/>
           ))}
         </div>
       </div>
